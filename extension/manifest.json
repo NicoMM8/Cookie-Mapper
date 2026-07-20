@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Cookie-Mapper: Mitigación Activa",
+  "version": "1.0",
+  "description": "Secuestra la API TCF v2 (IAB) para forzar el rechazo absoluto de todo el rastreo publicitario y evitar el Cookie Syncing.",
+  "permissions": [
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

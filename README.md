@@ -25,9 +25,10 @@ El ecosistema moderno de AdTech opera bajo una opacidad sistémica. Cuando un us
 * **Captura de Capital:** Interceptación del entorno `window.pbjs` (Prebid.js) para extraer el valor económico (CPM) y los ganadores de la subasta.
 * **Ampliación del Grafo:** Inyección de una nueva capa topológica económica en Neo4j (`Bidder` y relaciones `RECEIVED_BID`) para cruzar el rastreo legal con el flujo de capital real.
 
-### Fase 3: Escudo de Mitigación (Próximamente)
-* Desarrollo de una extensión web que implemente la inteligencia de red adquirida en la Fase 2 para interceptar peticiones HTTP.
-* Inyección proactiva de cargas útiles de "Consentimiento Nulo" (una cadena `euconsent-v2` criptográficamente válida, pero vacía) para bloquear el rastreo publicitario en su origen, eludiendo los patrones oscuros (Dark Patterns) presentes en las interfaces estándar.
+### Fase 3: Escudo de Mitigación (Completado)
+* **Extensión Chrome (Manifest V3):** Arquitectura aislada (Content Scripts) para interceptar la inicialización de las webs antes de la carga del DOM (`document_start`).
+* **API Hijacking (Secuestro TCF):** Bloqueo e intercepción de la función global `window.__tcfapi` utilizada por las plataformas CMP (Didomi, OneTrust, etc.).
+* **Inyección Proactiva (Poisoned Payload):** Despliegue de una cadena `TCString` de "Consentimiento Nulo" inmutable que devuelve 0 consentimientos y 0 intereses legítimos, forzando a los gestores de rastreo (como *Tealium* o *Prebid.js*) a abortar sus procesos por falta de base legal.
 
 ### Fase 4: Automatización de Cumplimiento RGPD (Próximamente)
 * Mapeo automatizado de los identificadores de proveedores rastreados con la información de contacto pública de sus Delegados de Protección de Datos (DPO) contenida en la GVL.
