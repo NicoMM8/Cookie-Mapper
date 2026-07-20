@@ -20,6 +20,11 @@ El ecosistema moderno de AdTech opera bajo una opacidad sistémica. Cuando un us
 * Modelado y exportación de las cadenas de consentimiento hacia una base de datos orientada a grafos (Neo4j) mediante inyecciones masivas (Bulk Inserts vía UNWIND).
 * Análisis topológico: Identificación visual de nodos críticos (Proveedores) e intenciones de uso (Propósitos) que monopolizan la adquisición de datos dentro del ecosistema.
 
+### Fase 2.5: Análisis de Red y RTB (Completado)
+* **Auditoría Dinámica Forense:** Inyección de sondas (Sniffer) en el entorno de ejecución para espiar las subastas publicitarias (Real-Time Bidding) mientras se navega.
+* **Captura de Capital:** Interceptación del entorno `window.pbjs` (Prebid.js) para extraer el valor económico (CPM) y los ganadores de la subasta.
+* **Ampliación del Grafo:** Inyección de una nueva capa topológica económica en Neo4j (`Bidder` y relaciones `RECEIVED_BID`) para cruzar el rastreo legal con el flujo de capital real.
+
 ### Fase 3: Escudo de Mitigación (Próximamente)
 * Desarrollo de una extensión web que implemente la inteligencia de red adquirida en la Fase 2 para interceptar peticiones HTTP.
 * Inyección proactiva de cargas útiles de "Consentimiento Nulo" (una cadena `euconsent-v2` criptográficamente válida, pero vacía) para bloquear el rastreo publicitario en su origen, eludiendo los patrones oscuros (Dark Patterns) presentes en las interfaces estándar.

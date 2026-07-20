@@ -15,7 +15,7 @@ const { TCString } = require('@iabtechlabtcf/core');
  * @param {string} tcStringPayload Carga útil euconsent-v2.
  * @param {GVL} gvl Instancia de la Global Vendor List.
  */
-async function persistConsentGraph(targetUrl, tcStringPayload, gvl) {
+async function persistConsentGraph(targetUrl, tcStringPayload, gvl, networkIntelligence = null) {
     const driver = getDriver();
     const session = driver.session();
 
@@ -116,6 +116,27 @@ async function persistConsentGraph(targetUrl, tcStringPayload, gvl) {
                 ON MATCH SET p.name = vpData.purposeName
                 MERGE (v)-[:DECLARES_PURPOSE]->(p)
             `, { vendorPurposes: vendorPurposesData });
+        }
+
+        // E) Pujas Económicas RTB y Flujo de Capital (Prebid.js)
+        if (networkIntelligence && networkIntelligence.rtbBids && networkIntelligence.rtbBids.length > 0) {
+            const bidsData = networkIntelligence.rtbBids.map(bid => ({
+                bidder: bid.bidder,
+                cpm: bid.cpm,
+                currency: bid.currency
+            }));
+
+            await session.run(`
+                MATCH (w:Website { domain: $domain })
+                UNWIND $bids AS bid
+                MERGE (b:Bidder { code: bid.bidder })
+                ON CREATE SET b.name = bid.bidder
+                MERGE (w)-[r:RECEIVED_BID]->(b)
+                ON CREATE SET r.cpm = bid.cpm, r.currency = bid.currency, r.timestamp = timestamp()
+                ON MATCH SET r.cpm = bid.cpm // Actualizamos el último precio de cotización
+            `, { domain, bids: bidsData });
+            
+            console.log(`[GRAPH] Inyectadas ${bidsData.length} pujas de mercado (RTB) para ${domain}.`);
         }
 
         console.log(`[GRAPH] Topología enriquecida para ${domain}: ${vendorsData.length} Proveedores y ${consentedPurposesData.length} Propósitos globales mapeados.`);
