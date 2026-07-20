@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: cookie_mapper_neo4j
+    ports:
+      - "7474:7474" # Interfaz web (Neo4j Browser)
+      - "7687:7687" # Protocolo Bolt (Conexión Node.js)
+    environment:
+      # Usamos la contraseña que pusiste en tu archivo .env
+      - NEO4J_AUTH=neo4j/17102002
+      # Aceptamos la licencia de la versión comunitaria
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+    volumes:
+      # Guardamos los datos en tu disco duro para que no se borren si apagas el contenedor
+      - ./neo4j_data:/data
+    restart: unless-stopped

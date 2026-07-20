@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "@iabtechlabtcf/core": "^1.5.21",
+    "dotenv": "^17.4.2",
+    "neo4j-driver": "^6.2.0",
     "playwright": "^1.61.1"
   }
 }
