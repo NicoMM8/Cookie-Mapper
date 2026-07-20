@@ -70,5 +70,27 @@ node src/batch-auditor.js
 # Accede a http://localhost:7474 en tu navegador e inicia sesión.
 ```
 
+## Bibliografía y Referencias Académicas
+
+El desarrollo de este proyecto se sustenta en las siguientes especificaciones técnicas, normativas legales y literatura científica relacionada con la privacidad y el ecosistema *AdTech*:
+
+### Normativa y Ecosistema Legal
+1. **Reglamento (UE) 2016/679 (RGPD):** *Reglamento General de Protección de Datos*. Parlamento Europeo y Consejo de la Unión Europea. Especial atención al **Artículo 17** (Derecho de supresión / "El olvido") y el **Artículo 21** (Derecho de oposición).
+2. **Directiva 2002/58/CE (Directiva ePrivacy):** Relativa al tratamiento de los datos personales y a la protección de la intimidad en el sector de las comunicaciones electrónicas ("Ley de Cookies").
+3. **Agencia Española de Protección de Datos (AEPD):** *Guía sobre el uso de las cookies* (Actualizada 2023) para la adaptación a las directrices del Comité Europeo de Protección de Datos (CEPD).
+
+### Estándares Técnicos de la Industria
+4. **IAB Europe:** *Transparency and Consent Framework (TCF) v2.2 Policies & Technical Specifications*. Documentación oficial sobre la codificación criptográfica de las cadenas de consentimiento (`TCString`) y el modelo relacional de la *Global Vendor List* (GVL).
+5. **Prebid.org:** *Header Bidding & Prebid.js Documentation*. Estándar líder de código abierto utilizado para subastas publicitarias descentralizadas (Real-Time Bidding - RTB) y *Cookie Syncing*.
+
+### Literatura Científica sobre "Dark Patterns" y Privacidad
+6. **Nouwens, M., Liccardi, I., Veale, M., Karger, D., & Kagal, L. (2020).** *Dark Patterns after the GDPR: Scraping Consent Pop-ups and Demonstrating their Influence*. Actas de la Conferencia ACM CHI sobre Factores Humanos en Sistemas Informáticos. (Análisis empírico de cómo las plataformas CMP manipulan a los usuarios).
+7. **Matte, C., Bielova, N., & Santos, C. (2020).** *Do Cookie Banners Respect my Choice? Measuring Legal Compliance of Banners from IAB Europe’s Transparency and Consent Framework*. Simposio IEEE sobre Seguridad y Privacidad (S&P).
+8. **Zuboff, S. (2019).** *The Age of Surveillance Capitalism: The Fight for a Human Future at the New Frontier of Power*. PublicAffairs. (Contexto socioeconómico de la extracción masiva de datos y el flujo de capital en AdTech).
+
+### Tecnologías e Instrumentación
+9. **Neo4j Graph Data Platform:** *Cypher Query Language Reference*. Utilizado para la persistencia topológica y la representación en grafos del ecosistema de rastreadores.
+10. **W3C (World Wide Web Consortium):** *WebExtensions API & Manifest V3 Architecture*. Especificación técnica para el secuestro de red y ejecución de *Content Scripts* en entornos aislados.
+
 ---
-*Aviso legal: Este proyecto se desarrolla exclusivamente con fines educativos, analíticos y de protección de la privacidad.*
+*Aviso legal: Este proyecto se desarrolla exclusivamente con fines educativos, académicos y de protección proactiva de la privacidad.*
