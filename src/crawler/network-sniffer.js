@@ -7,11 +7,21 @@
 class NetworkSniffer {
     /**
      * @param {import('playwright').Page} page - Instancia de la página de Playwright.
+     * @param {string} targetUrl - URL principal que se está auditando.
      */
-    constructor(page) {
+    constructor(page, targetUrl) {
         this.page = page;
+        this.targetUrl = targetUrl;
         this.bids = [];
         this.syncRequests = 0;
+        this.syncGraph = []; // Almacenará las relaciones de reventa: { source, target }
+        
+        try {
+            this.mainDomain = new URL(targetUrl).hostname.replace('www.', '');
+        } catch (e) {
+            this.mainDomain = targetUrl;
+        }
+
         this._setupListeners();
     }
 
@@ -20,17 +30,68 @@ class NetworkSniffer {
      * Busca heurísticas de sincronización cruzada de identificadores (User Matching).
      */
     _setupListeners() {
+        const getRootDomain = (hostname) => {
+            const parts = hostname.split('.');
+            return parts.length > 2 ? parts.slice(-2).join('.') : hostname;
+        };
+        const mainRootDomain = getRootDomain(this.mainDomain);
+
+        // 1. Intercepción por Referer Hijacking (Chivato)
         this.page.on('request', request => {
             const url = request.url().toLowerCase();
-            
-            // Heurística básica: detecta endpoints típicos de Cookie Matching
-            if (
-                url.includes('sync') || 
-                url.includes('match') || 
-                url.includes('uid=') ||
-                url.includes('usersync')
-            ) {
+            if (url.includes('sync') || url.includes('match') || url.includes('uid=') || url.includes('usersync')) {
                 this.syncRequests++;
+            }
+
+            // Análisis del Referer para descubrir quién originó esta petición (Data Broker -> Data Broker)
+            const headers = request.headers();
+            if (headers.referer) {
+                try {
+                    const sourceUrl = new URL(headers.referer);
+                    const targetUrl = new URL(request.url());
+                    
+                    const sourceDomain = getRootDomain(sourceUrl.hostname);
+                    const targetDomain = getRootDomain(targetUrl.hostname);
+
+                    // Filtramos: 
+                    // a) Que no sean la misma corporación
+                    // b) Que el origen NO sea la web que visitamos (buscamos reventas de 3º a 4º party)
+                    if (sourceDomain !== targetDomain && 
+                        sourceDomain !== mainRootDomain && 
+                        targetDomain !== mainRootDomain && 
+                        sourceUrl.protocol === 'https:') {
+                        
+                        this.syncGraph.push({ source: sourceDomain, target: targetDomain });
+                    }
+                } catch (e) {}
+            }
+        });
+
+        // 2. Interceptación de reventas (Cookie Syncing) mediante redirecciones 302
+        this.page.on('response', response => {
+            const status = response.status();
+            // Los códigos 301, 302, 307 son redirecciones forzadas por el servidor
+            if (status >= 300 && status <= 308) {
+                const headers = response.headers();
+                if (headers.location) {
+                    try {
+                        const sourceUrl = new URL(response.url());
+                        const targetUrl = new URL(headers.location, sourceUrl.origin);
+
+                        const sourceDomain = getRootDomain(sourceUrl.hostname);
+                        const targetDomain = getRootDomain(targetUrl.hostname);
+
+                        // Si la redirección cruza fronteras corporativas, es una reventa de datos clara
+                        if (sourceDomain !== targetDomain && 
+                            sourceDomain !== mainRootDomain && 
+                            targetDomain !== mainRootDomain && 
+                            sourceUrl.protocol === 'https:') {
+                            this.syncGraph.push({ source: sourceDomain, target: targetDomain });
+                        }
+                    } catch (e) {
+                        // Ignoramos rutas relativas o URLs malformadas en los headers
+                    }
+                }
             }
         });
     }
@@ -43,8 +104,8 @@ class NetworkSniffer {
      */
     async extractBids() {
         try {
-            // Esperamos unos segundos para que los SSPs (Google, Criteo, etc.) tengan tiempo de pujar
-            await this.page.waitForTimeout(3500);
+            // AUMENTAMOS EL TIEMPO A 10 SEGUNDOS para atrapar la cascada completa de rastreadores
+            await this.page.waitForTimeout(10000);
             
             const prebidData = await this.page.evaluate(() => {
                 // Comprobamos si la web utiliza la tecnología estándar Prebid.js
@@ -88,7 +149,8 @@ class NetworkSniffer {
     getReport() {
         return {
             rtbBids: this.bids,
-            syncRequestsDetected: this.syncRequests
+            syncRequestsDetected: this.syncRequests,
+            syncGraph: this.syncGraph
         };
     }
 }

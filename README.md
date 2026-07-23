@@ -35,11 +35,16 @@ El ecosistema moderno de AdTech opera bajo una opacidad sistémica. Cuando un us
 * **Inyección de Datos y Automatización:** Extracción automática de la IP pública del usuario mediante APIs externas e inyección de variables de entorno seguras (`.env`).
 * **Generación Masiva de Cartas de Cese:** Producción instantánea de cientos de correos electrónicos legales listos para enviar exigiendo el Derecho de Supresión (Art. 17 RGPD) y el Derecho de Oposición (Art. 21 RGPD).
 
+### Fase 5: Dashboard de Analítica Visual HTML (Completado)
+* **Generación de Informes Ejecutivos:** Script (`generate-dashboard.js`) que extrae la inteligencia consolidada desde Neo4j.
+* **Interfaz de Presentación TFG:** Panel interactivo *Dark Mode* (`output/dashboard.html`) con gráficos dinámicos (Chart.js), métricas KPI de volumen de negocio en RTB y ranking de *Data Brokers* de 4º nivel.
+
 ## Pila Tecnológica
 - **Node.js**: Entorno de ejecución.
 - **Playwright**: Automatización de navegadores *headless* e interacción con el árbol DOM.
 - **Neo4j & Cypher**: Base de datos orientada a grafos y lenguaje de consultas.
 - **@iabtechlabtcf/core**: Analizador criptográfico y validador de los requisitos del estándar TCF v2.
+- **Chart.js**: Renderizado de gráficos vectoriales interactivos para informes ejecutivos.
 - **Docker**: Contenerización del entorno de base de datos.
 
 ## Instalación y Uso
@@ -52,22 +57,17 @@ npm install
 npx playwright install chromium
 ```
 
-### Ejecutar Fase 1 (Auditoría Individual en Consola)
+### Comandos Principales
+
 ```bash
-node poc-tcf-decoder/auditor.js https://www.marca.com
-```
+# Auditar masivamente la lista de webs (targets.txt) y volcar a Neo4j
+npm run audit
 
-### Ejecutar Fase 2 (Auditoría Masiva y Mapeo en Grafos)
-```bash
-# 1. Levantar la base de datos Neo4j (Requiere Docker)
-docker-compose up -d
+# Generar el Dashboard de Analítica Visual HTML para presentaciones
+npm run dashboard
 
-# 2. Rellenar el archivo targets.txt con los dominios deseados
-# 3. Ejecutar el orquestador por lotes
-node src/batch-auditor.js
-
-# 4. Visualizar el grafo topológico
-# Accede a http://localhost:7474 en tu navegador e inicia sesión.
+# Generar las cartas de ejercicio de derechos RGPD en markdown
+npm run rgpd
 ```
 
 ## Bibliografía y Referencias Académicas

@@ -1,4 +1,10 @@
 {
+  "scripts": {
+    "audit": "node src/batch-auditor.js",
+    "dashboard": "node src/reports/generate-dashboard.js",
+    "rgpd": "node src/rgpd/legal-automator.js",
+    "reset-db": "node src/db/reset-db.js"
+  },
   "dependencies": {
     "@iabtechlabtcf/core": "^1.5.21",
     "dotenv": "^17.4.2",

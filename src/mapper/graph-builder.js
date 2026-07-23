@@ -139,6 +139,24 @@ async function persistConsentGraph(targetUrl, tcStringPayload, gvl, networkIntel
             console.log(`[GRAPH] Inyectadas ${bidsData.length} pujas de mercado (RTB) para ${domain}.`);
         }
 
+        // F) Mapeo de Reventas (Cookie Syncing - 4th Party)
+        if (networkIntelligence && networkIntelligence.syncGraph && networkIntelligence.syncGraph.length > 0) {
+            await session.run(`
+                UNWIND $syncs AS sync
+                // Asegurarnos de que existen ambos actores
+                MERGE (b1:Bidder { code: sync.source })
+                ON CREATE SET b1.name = sync.source
+                MERGE (b2:Bidder { code: sync.target })
+                ON CREATE SET b2.name = sync.target
+                // Crear la ruta del dato
+                MERGE (b1)-[r:SHARES_DATA_WITH]->(b2)
+                ON CREATE SET r.timestamp = timestamp(), r.weight = 1
+                ON MATCH SET r.weight = r.weight + 1
+            `, { syncs: networkIntelligence.syncGraph });
+            
+            console.log(`[GRAPH] Inyectadas ${networkIntelligence.syncGraph.length} reventas de datos (Cookie Syncing) identificadas en ${domain}.`);
+        }
+
         console.log(`[GRAPH] Topología enriquecida para ${domain}: ${vendorsData.length} Proveedores y ${consentedPurposesData.length} Propósitos globales mapeados.`);
         
     } catch (err) {

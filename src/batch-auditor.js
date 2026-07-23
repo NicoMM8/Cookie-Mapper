@@ -6,6 +6,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { chromium } = require('playwright');
 const https = require('https');
 const { GVL } = require('@iabtechlabtcf/core');
@@ -17,9 +18,10 @@ const CONFIG = {
     targetsFile: path.join(__dirname, '../targets.txt'),
     gvlEndpoint: 'https://vendor-list.consensu.org/v3/vendor-list.json',
     targetCookieNames: ['euconsent-v2', 'euconsent'],
-    navigationTimeoutMs: 5000,
-    interactionTimeoutMs: 3000,
-    headlessBrowser: false // Cambiado a false para evitar que los anti-bots nos bloqueen
+    navigationTimeoutMs: 4000,
+    interactionTimeoutMs: 2500,
+    headlessBrowser: false,
+    concurrency: 5 // 5 pestañas de navegador simultáneas en paralelo
 };
 
 const SELECTORS = {
@@ -48,13 +50,14 @@ function fetchGlobalVendorList() {
 
 async function extractPayload(context, targetUrl) {
     const page = await context.newPage();
-    
-    // 1. Inicializamos el sniffer forense de red ANTES de navegar para no perdernos nada
-    const sniffer = new NetworkSniffer(page);
+    const sniffer = new NetworkSniffer(page, targetUrl);
     
     try {
-        Logger.info(`Navegando a: ${targetUrl}`);
-        await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        try {
+            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 35000 });
+        } catch (navErr) {
+            // Intentar continuar de todos modos
+        }
         await page.waitForTimeout(CONFIG.navigationTimeoutMs);
 
         try {
@@ -68,11 +71,9 @@ async function extractPayload(context, targetUrl) {
             await page.waitForTimeout(CONFIG.interactionTimeoutMs);
         } catch (e) {}
 
-        // 2. Extraemos subastas RTB (Prebid) usando el sniffer
         await sniffer.extractBids();
         const snifferReport = sniffer.getReport();
 
-        // 3. Extraemos el payload criptográfico legal (TCF)
         const cookies = await context.cookies();
         const consentCookie = cookies.find(c => CONFIG.targetCookieNames.includes(c.name));
         
@@ -80,7 +81,7 @@ async function extractPayload(context, targetUrl) {
         if (consentCookie) {
             payload = consentCookie.value;
         } else {
-            payload = await page.evaluate(() => window.localStorage.getItem('euconsent-v2'));
+            payload = await page.evaluate(() => window.localStorage.getItem('euconsent-v2')).catch(() => null);
         }
 
         return {
@@ -89,19 +90,24 @@ async function extractPayload(context, targetUrl) {
         };
 
     } catch (err) {
-        Logger.error(`Error procesando ${targetUrl}: ${err.message}`);
         return null;
     } finally {
-        await page.close();
+        await page.close().catch(() => {});
     }
 }
 
 async function main() {
-    Logger.info('Iniciando orquestador de lotes (Batch Auditor) con soporte RTB...');
+    Logger.info(`Iniciando orquestador de lotes a GRAN ESCALA (Concurrencia: ${CONFIG.concurrency} pestañas en paralelo)...`);
     
     if (!fs.existsSync(CONFIG.targetsFile)) {
         Logger.error(`Archivo no encontrado: ${CONFIG.targetsFile}`);
         process.exit(1);
+    }
+
+    const evidenceDir = path.join(__dirname, '../evidence');
+    if (!fs.existsSync(evidenceDir)) {
+        fs.mkdirSync(evidenceDir, { recursive: true });
+        Logger.info(`Directorio de evidencias forenses creado: ${evidenceDir}`);
     }
 
     const urls = fs.readFileSync(CONFIG.targetsFile, 'utf8').split('\n').map(url => url.trim()).filter(url => url.length > 0 && url.startsWith('http'));
@@ -111,31 +117,99 @@ async function main() {
         process.exit(0);
     }
 
+    Logger.info(`Cargados ${urls.length} dominios para auditar.`);
+
     let gvl;
     try { gvl = await fetchGlobalVendorList(); } catch (e) { process.exit(1); }
 
     const browser = await chromium.launch({ headless: CONFIG.headlessBrowser });
-    const context = await browser.newContext();
+    
+    let processedCount = 0;
+    let successCount = 0;
 
-    try {
-        for (const url of urls) {
-            Logger.info('--------------------------------------------------');
-            const data = await extractPayload(context, url);
-            
-            if (data && data.tcString) {
-                Logger.info(`[EXITO] Carga legal y forense obtenida para ${url}. Mapeando a Neo4j...`);
-                // Modificamos el pase de parámetros para inyectar la inteligencia de red
-                await persistConsentGraph(url, data.tcString, gvl, data.networkIntelligence);
-            } else {
-                Logger.warn(`[FALLO] No se obtuvo consentimiento para ${url}.`);
+    const queue = [...urls];
+
+    async function worker(workerId) {
+        while (queue.length > 0) {
+            const url = queue.shift();
+            if (!url) break;
+
+            const currentIdx = ++processedCount;
+            let hostname = 'unknown';
+            try { hostname = new URL(url).hostname; } catch(e) {}
+            const timestamp = Date.now();
+            const recordHarPath = path.join(__dirname, '../evidence', `${hostname}-${timestamp}.har`);
+
+            const context = await browser.newContext({
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                viewport: { width: 1280, height: 720 },
+                deviceScaleFactor: 1,
+                isMobile: false,
+                hasTouch: false,
+                defaultBrowserType: 'chromium',
+                recordHar: { path: recordHarPath }
+            });
+
+            let successData = null;
+
+            try {
+                Logger.info(`[Worker ${workerId}] [${currentIdx}/${urls.length}] Auditando: ${url}`);
+                const data = await extractPayload(context, url);
+                
+                if (data && data.tcString) {
+                    Logger.info(`[Worker ${workerId}] [EXITO] ${url} -> Guardando en Neo4j...`);
+                    await persistConsentGraph(url, data.tcString, gvl, data.networkIntelligence);
+                    successData = data;
+                    successCount++;
+                } else {
+                    Logger.warn(`[Worker ${workerId}] [SIN CONSENTIMIENTO] ${url}`);
+                }
+            } catch (err) {
+                Logger.error(`[Worker ${workerId}] Error en ${url}: ${err.message}`);
+            } finally {
+                await context.close().catch(() => {});
+                
+                if (successData) {
+                    try {
+                        let harHash = 'N/A';
+                        if (fs.existsSync(recordHarPath)) {
+                            const fileBuffer = fs.readFileSync(recordHarPath);
+                            const hashSum = crypto.createHash('sha256');
+                            hashSum.update(fileBuffer);
+                            harHash = hashSum.digest('hex');
+                        }
+                        
+                        const evidenceJsonPath = path.join(__dirname, '../evidence', `${hostname}-${timestamp}.json`);
+                        fs.writeFileSync(evidenceJsonPath, JSON.stringify({ 
+                            url, 
+                            timestamp: new Date(timestamp).toISOString(), 
+                            tcString: successData.tcString, 
+                            harHash: harHash,
+                            networkIntelligence: successData.networkIntelligence 
+                        }, null, 2));
+                        Logger.info(`[Worker ${workerId}] Evidencia firmada (SHA-256): ${harHash}`);
+                    } catch(e) {
+                        Logger.warn(`No se pudo generar firma pericial para ${url}: ${e.message}`);
+                    }
+                }
             }
-            await context.clearCookies();
         }
-    } finally {
-        Logger.info('Cerrando motores...');
-        await browser.close();
-        await closeDriver();
     }
+
+    // Iniciar trabajadores en paralelo
+    const workers = [];
+    for (let i = 1; i <= CONFIG.concurrency; i++) {
+        workers.push(worker(i));
+    }
+
+    await Promise.all(workers);
+
+    Logger.info('================================================================');
+    Logger.info(`[AUDITORIA COMPLETADA] ${successCount}/${urls.length} sitios auditados con éxito y mapeados en Neo4j.`);
+    Logger.info('================================================================');
+
+    await browser.close();
+    await closeDriver();
 }
 
 main();
