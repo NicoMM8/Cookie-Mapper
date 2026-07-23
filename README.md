@@ -1,96 +1,77 @@
-# Cookie-Mapper
+# Cookie-Mapper: Plataforma Forense de Auditoría AdTech
 
-Herramienta integral de auditoría, mapeo topológico y mitigación del rastreo publicitario masivo, fundamentada en el estándar TCF (Transparency and Consent Framework) de la IAB.
+Plataforma de inteligencia, auditoría topológica y recolección de pruebas periciales diseñada para exponer y mitigar la fuga sistemática de datos personales en el ecosistema publicitario global (AdTech), fundamentada en el análisis criptográfico del estándar TCF de la IAB y la recolección de tráfico de red.
 
-## Resumen del Proyecto
+## Resumen de Inteligencia
 
-El ecosistema moderno de AdTech opera bajo una opacidad sistémica. Cuando un usuario interactúa con un aviso de cookies estándar, sus preferencias de datos se propagan hacia múltiples proveedores internacionales mediante redes de subastas en tiempo real (Real-Time Bidding). 
+El ecosistema moderno de AdTech opera bajo una opacidad estructural diseñada para evadir el escrutinio regulatorio. Cuando un usuario interactúa con un aviso de cookies, sus preferencias se propagan instantáneamente hacia cientos de proveedores internacionales mediante redes de subastas en tiempo real (*Real-Time Bidding* o RTB) y sincronización oculta de identificadores (*Cookie Syncing*).
 
-**Cookie-Mapper** está diseñado para aportar visibilidad a este ecosistema. Mediante la automatización de la navegación web, la extracción de las cargas útiles criptográficas de consentimiento (`euconsent-v2`) y su validación cruzada con registros oficiales, esta herramienta expone la red subyacente de rastreadores, proporcionando los medios necesarios para auditar y revocar el acceso a los datos.
+**Cookie-Mapper** no es un mero "scraper"; es una **herramienta de investigación forense**. Automatiza la navegación, extrae las cargas útiles criptográficas de consentimiento (`euconsent-v2`), intercepta el tráfico de red bruto (archivos `.har`) y lo sella mediante hashes SHA-256. Todo ello se cruza en tiempo real con la *Global Vendor List* (GVL) y el *Data Privacy Framework* (DPF) de EE.UU., generando pruebas de grado pericial sobre violaciones flagrantes del Reglamento General de Protección de Datos (RGPD), especialmente en lo relativo a transferencias internacionales ilícitas (Art. 44).
 
-## Hoja de Ruta (Roadmap)
+## Capacidades de Auditoría
 
-### Fase 1: El Auditor (MVP - Completado)
-* Scripts de automatización basados en Playwright para eludir sistemas de mitigación de bots e interactuar de forma integrada con las principales plataformas de gestión de consentimiento (CMP), tales como Didomi y OneTrust.
-* Extracción y decodificación criptográfica de la carga útil `TCString` inyectada en la capa de almacenamiento del navegador.
-* Cruce de datos en tiempo real con la *Global Vendor List* (GVL) de la IAB para generar auditorías legibles sobre procesadores de datos autorizados y sus respectivos propósitos.
+### 1. Extracción Forense y Cadena de Custodia
+* **Auditoría Automatizada:** Motor basado en Playwright capaz de auditar cientos de dominios eludiendo mitigaciones antibot e interactuando con las principales plataformas CMP (Didomi, OneTrust).
+* **Firma Criptográfica:** Cada captura de tráfico HTTP/HTTPS se graba en formato `.har` y es sellada inmediatamente con un hash SHA-256 para garantizar la integridad y el no repudio de la prueba pericial ante autoridades como la AEPD.
+* **Directorio de Evidencia:** Generación automática de manifiestos JSON que vinculan la carga útil TCF interceptada, la topología de red y el tráfico cifrado.
 
-### Fase 2: Motor de Grafos (MVP - Completado)
-* Escalado del motor de rastreo para ejecutar auditorías masivas sobre conjuntos de dominios de alto tráfico leyendo un archivo de objetivos (`targets.txt`).
-* Modelado y exportación de las cadenas de consentimiento hacia una base de datos orientada a grafos (Neo4j) mediante inyecciones masivas (Bulk Inserts vía UNWIND).
-* Análisis topológico: Identificación visual de nodos críticos (Proveedores) e intenciones de uso (Propósitos) que monopolizan la adquisición de datos dentro del ecosistema.
+### 2. Motor Topológico (Grafo de Explotación)
+* **Ingesta Masiva:** Modelado y exportación de las cadenas de consentimiento hacia una base de datos orientada a grafos (Neo4j) mediante inyecciones transaccionales de alto rendimiento.
+* **Análisis de Red:** Identificación visual de nodos críticos, *Data Brokers* de 4º nivel y cárteles de compartición de datos que monopolizan la adquisición de perfiles de usuario.
 
-### Fase 2.5: Análisis de Red y RTB (Completado)
-* **Auditoría Dinámica Forense:** Inyección de sondas (Sniffer) en el entorno de ejecución para espiar las subastas publicitarias (Real-Time Bidding) mientras se navega.
-* **Captura de Capital:** Interceptación del entorno `window.pbjs` (Prebid.js) para extraer el valor económico (CPM) y los ganadores de la subasta.
-* **Ampliación del Grafo:** Inyección de una nueva capa topológica económica en Neo4j (`Bidder` y relaciones `RECEIVED_BID`) para cruzar el rastreo legal con el flujo de capital real.
+### 3. Interceptación Económica (RTB & Cookie Syncing)
+* **Captura de Capital (Sniffer):** Inyección de sondas en el entorno V8 del navegador para interceptar la instancia global `window.pbjs` (Prebid.js), extrayendo el valor económico (CPM), moneda y ganadores de las subastas en la sombra.
+* **Detección de Reventa:** Análisis heurístico de redirecciones HTTP 302 y Referer Hijacking para exponer la sincronización silenciosa de identificadores de usuario entre corporaciones externas al dominio original.
 
-### Fase 3: Escudo de Mitigación (Completado)
-* **Extensión Chrome (Manifest V3):** Arquitectura aislada (Content Scripts) para interceptar la inicialización de las webs antes de la carga del DOM (`document_start`).
-* **API Hijacking (Secuestro TCF):** Bloqueo e intercepción de la función global `window.__tcfapi` utilizada por las plataformas CMP (Didomi, OneTrust, etc.).
-* **Inyección Proactiva (Poisoned Payload):** Despliegue de una cadena `TCString` de "Consentimiento Nulo" inmutable que devuelve 0 consentimientos y 0 intereses legítimos, forzando a los gestores de rastreo (como *Tealium* o *Prebid.js*) a abortar sus procesos por falta de base legal.
+### 4. Inteligencia Legal y DPF
+* **Validación Jurisdiccional:** Cruce automático de la sede social de cada *Vendor* con la base de datos oficial del *Data Privacy Framework* (DPF) del Departamento de Comercio de EE.UU.
+* **Detección de Ilegalidad:** Banderas de riesgo rojo (⛔ Ilegal) para corporaciones radicadas en jurisdicciones sin adecuación (ej. China, Rusia) operando en el EEE, lo que constituye una infracción del Art. 44 del RGPD.
+* **Generación de Cartas de Cese (Art. 17 y 21):** Extracción automatizada de información cruzada para generar de forma masiva demandas legales de supresión y oposición contra el rastreo de datos masivo.
 
-### Fase 4: Automatización de Cumplimiento Legal (Completado)
-* **Motor Generador RGPD:** Creación de un script (`legal-automator.js`) que cruza la topología de la base de datos (Neo4j) con una plantilla legal base.
-* **Inyección de Datos y Automatización:** Extracción automática de la IP pública del usuario mediante APIs externas e inyección de variables de entorno seguras (`.env`).
-* **Generación Masiva de Cartas de Cese:** Producción instantánea de cientos de correos electrónicos legales listos para enviar exigiendo el Derecho de Supresión (Art. 17 RGPD) y el Derecho de Oposición (Art. 21 RGPD).
-
-### Fase 5: Dashboard de Analítica Visual HTML (Completado)
-* **Generación de Informes Ejecutivos:** Script (`generate-dashboard.js`) que extrae la inteligencia consolidada desde Neo4j.
-* **Interfaz de Presentación TFG:** Panel interactivo *Dark Mode* (`output/dashboard.html`) con gráficos dinámicos (Chart.js), métricas KPI de volumen de negocio en RTB y ranking de *Data Brokers* de 4º nivel.
+### 5. Dashboard Ejecutivo de Inteligencia
+* Panel interactivo (`npm run dashboard`) enfocado a investigadores, auditores DPO y autoridades legales.
+* Gráficos dinámicos, métricas KPI de volumen de negocio en RTB, matrices de riesgo legal de transferencias extracomunitarias y ranking de los mayores acaparadores de datos del ecosistema.
 
 ## Pila Tecnológica
-- **Node.js**: Entorno de ejecución.
-- **Playwright**: Automatización de navegadores *headless* e interacción con el árbol DOM.
-- **Neo4j & Cypher**: Base de datos orientada a grafos y lenguaje de consultas.
-- **@iabtechlabtcf/core**: Analizador criptográfico y validador de los requisitos del estándar TCF v2.
-- **Chart.js**: Renderizado de gráficos vectoriales interactivos para informes ejecutivos.
-- **Docker**: Contenerización del entorno de base de datos.
+- **Node.js**: Entorno de ejecución principal (Asincronía y Concurrencia Pura).
+- **Playwright**: Motor *headless* de instrumentación y recolección de evidencias HTTP/HAR.
+- **Neo4j & Cypher**: Base de datos orientada a grafos para la persistencia topológica.
+- **@iabtechlabtcf/core**: Analizador criptográfico del estándar TCF v2.
+- **Crypto (Node nativo)**: Hashing SHA-256 para validación forense de evidencias.
+- **Chart.js**: Renderizado vectorial para el panel de inteligencia de amenazas de privacidad.
 
-## Instalación y Uso
+## Instalación y Ejecución
 
 ```bash
-# 1. Instalar dependencias de rastreo, criptografía y base de datos
+# 1. Instalar dependencias del orquestador y criptografía
 npm install
 
-# 2. Instalar el motor del navegador Chromium para automatización
+# 2. Instalar el motor de instrumentación
 npx playwright install chromium
 ```
 
-### Comandos Principales
+### Comandos de Operación
 
 ```bash
-# Auditar masivamente la lista de webs (targets.txt) y volcar a Neo4j
+# Iniciar el motor de auditoría masiva y recolección forense
 npm run audit
 
-# Generar el Dashboard de Analítica Visual HTML para presentaciones
+# Levantar el generador de inteligencia (Panel HTML interactivo)
 npm run dashboard
 
-# Generar las cartas de ejercicio de derechos RGPD en markdown
+# Generar el paquete de requerimientos legales (Cartas RGPD)
 npm run rgpd
 ```
 
-## Bibliografía y Referencias Académicas
+## Referencias Regulatorias y Científicas
 
-El desarrollo de este proyecto se sustenta en las siguientes especificaciones técnicas, normativas legales y literatura científica relacionada con la privacidad y el ecosistema *AdTech*:
+El diseño de esta plataforma investigativa se alinea con la jurisprudencia europea actual y el análisis crítico del capitalismo de vigilancia:
 
-### Normativa y Ecosistema Legal
-1. **Reglamento (UE) 2016/679 (RGPD):** *Reglamento General de Protección de Datos*. Parlamento Europeo y Consejo de la Unión Europea. Especial atención al **Artículo 17** (Derecho de supresión / "El olvido") y el **Artículo 21** (Derecho de oposición).
-2. **Directiva 2002/58/CE (Directiva ePrivacy):** Relativa al tratamiento de los datos personales y a la protección de la intimidad en el sector de las comunicaciones electrónicas ("Ley de Cookies").
-3. **Agencia Española de Protección de Datos (AEPD):** *Guía sobre el uso de las cookies* (Actualizada 2023) para la adaptación a las directrices del Comité Europeo de Protección de Datos (CEPD).
-
-### Estándares Técnicos de la Industria
-4. **IAB Europe:** *Transparency and Consent Framework (TCF) v2.2 Policies & Technical Specifications*. Documentación oficial sobre la codificación criptográfica de las cadenas de consentimiento (`TCString`) y el modelo relacional de la *Global Vendor List* (GVL).
-5. **Prebid.org:** *Header Bidding & Prebid.js Documentation*. Estándar líder de código abierto utilizado para subastas publicitarias descentralizadas (Real-Time Bidding - RTB) y *Cookie Syncing*.
-
-### Literatura Científica sobre "Dark Patterns" y Privacidad
-6. **Nouwens, M., Liccardi, I., Veale, M., Karger, D., & Kagal, L. (2020).** *Dark Patterns after the GDPR: Scraping Consent Pop-ups and Demonstrating their Influence*. Actas de la Conferencia ACM CHI sobre Factores Humanos en Sistemas Informáticos. (Análisis empírico de cómo las plataformas CMP manipulan a los usuarios).
-7. **Matte, C., Bielova, N., & Santos, C. (2020).** *Do Cookie Banners Respect my Choice? Measuring Legal Compliance of Banners from IAB Europe’s Transparency and Consent Framework*. Simposio IEEE sobre Seguridad y Privacidad (S&P).
-8. **Zuboff, S. (2019).** *The Age of Surveillance Capitalism: The Fight for a Human Future at the New Frontier of Power*. PublicAffairs. (Contexto socioeconómico de la extracción masiva de datos y el flujo de capital en AdTech).
-
-### Tecnologías e Instrumentación
-9. **Neo4j Graph Data Platform:** *Cypher Query Language Reference*. Utilizado para la persistencia topológica y la representación en grafos del ecosistema de rastreadores.
-10. **W3C (World Wide Web Consortium):** *WebExtensions API & Manifest V3 Architecture*. Especificación técnica para el secuestro de red y ejecución de *Content Scripts* en entornos aislados.
+1. **Reglamento (UE) 2016/679 (RGPD):** Especial atención a los **Artículos 17, 21 y 44** (Transferencias internacionales de datos).
+2. **Decisión de Ejecución (UE) 2023/1795 (DPF):** Marco de Privacidad de Datos UE-EE.UU.
+3. **Agencia Española de Protección de Datos (AEPD):** Guías técnicas sobre el uso de cookies e inspección de transferencias ilícitas.
+4. **Matte, C., Bielova, N., & Santos, C. (2020):** *Do Cookie Banners Respect my Choice? Measuring Legal Compliance of Banners from IAB Europe’s TCF*. IEEE (S&P).
+5. **Nouwens, M. et al. (2020):** *Dark Patterns after the GDPR: Scraping Consent Pop-ups and Demonstrating their Influence*. ACM CHI.
 
 ---
-*Aviso legal: Este proyecto se desarrolla exclusivamente con fines educativos, académicos y de protección proactiva de la privacidad.*
+*Aviso Legal: Esta plataforma es una herramienta de investigación y auditoría de privacidad ("Legal Tech"). La intercepción de subastas y la extracción de datos se realiza pasivamente sobre tráfico público expuesto en el cliente. La exactitud forense de las capturas está garantizada mediante hashing criptográfico.*
